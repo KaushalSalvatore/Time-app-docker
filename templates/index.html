@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10-Minute Timer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="timer-container">
+        <h1>10-Minute Timer</h1>
+        <div id="timer-display">10:00</div>
+        <div class="buttons">
+            <button id="start-btn">Start</button>
+            <button id="pause-btn" disabled>Pause</button>
+            <button id="stop-btn" disabled>Stop</button>
+        </div>
+    </div>
+
+    <script>
+        const timerDisplay = document.getElementById('timer-display');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        
+        let timerInterval;
+        let isPaused = false;
+
+        function updateDisplay(time) {
+            timerDisplay.textContent = time;
+        }
+
+        function fetchTimerStatus() {
+    fetch('/status')
+        .then(response => response.json())
+        .then(data => {
+            updateDisplay(data.formatted);
+            
+            // Update button states
+            startBtn.disabled = data.running && !data.paused;
+            pauseBtn.disabled = !data.running;
+            pauseBtn.textContent = data.paused ? 'Resume' : 'Pause';
+            stopBtn.disabled = !data.running;
+            restartBtn.disabled = !data.running;
+
+            if (data.running && data.remaining <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                alert("Time's up!");
+                // Reset all buttons to initial state
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                stopBtn.disabled = true;
+                restartBtn.disabled = true;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+        startBtn.addEventListener('click', () => {
+            fetch('/start')
+                .then(() => {
+                    fetchTimerStatus();
+                    if (!timerInterval) {
+                        timerInterval = setInterval(fetchTimerStatus, 1000);
+                    }
+                });
+        });
+
+        pauseBtn.addEventListener('click', () => {
+    if (pauseBtn.textContent === 'Pause') {
+        fetch('/pause')
+            .then(() => {
+                fetchTimerStatus();
+                // Don't clear interval here - we still want to poll for status
+            });
+    } else {
+        fetch('/resume')
+            .then(() => {
+                fetchTimerStatus();
+            });
+    }
+});
+
+        stopBtn.addEventListener('click', () => {
+            fetch('/stop');
+            clearInterval(timerInterval);
+            timerInterval = null;
+            fetchTimerStatus();
+        });
+
+        // Initial display
+        fetchTimerStatus();
+    </script>
+</body>
+</html>
