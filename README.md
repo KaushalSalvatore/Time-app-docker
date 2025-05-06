@@ -4,7 +4,7 @@
 
 #### What is docker
 
-```bash
+```
 Docker is an open-source platform that enables developers to automate the deployment, scaling, and management of applications inside lightweight, portable containers. Containers package an application along with its dependencies and configurations, ensuring consistency across different environments (development, testing, production).
 ```
 
